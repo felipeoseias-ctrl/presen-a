@@ -40,7 +40,6 @@ export async function criarWorkspace(nome) {
 export async function abrirChamada(turmaId, data) {
   const existente = await db.chamadas.where({ turmaId, data }).first()
   if (existente) {
-    // garante que todos os alunos atuais tenham registro
     const alunos = await db.alunos.where({ turmaId }).toArray()
     const pres = await db.presencas.where({ chamadaId: existente.id }).toArray()
     const set = new Set(pres.map(p => p.alunoId))
@@ -81,7 +80,6 @@ export async function registrarNotificacao({ alunoId, turmaId, observacao, works
   return { qtd, gerouFalta }
 }
 
-// Backup completo em JSON (para arquivo)
 export async function exportarBackup(workspaceId) {
   const workspace = await db.workspaces.get(workspaceId)
   const turmas = await db.turmas.where({ workspaceId }).toArray()
@@ -93,8 +91,7 @@ export async function exportarBackup(workspaceId) {
   const notificacoes = turmaIds.length ? await db.notificacoes.where('turmaId').anyOf(turmaIds).toArray() : []
   const cfg = await db.config.get(`config:${workspaceId}`)
   return {
-    versao: 1,
-    workspace, turmas, alunos, chamadas, presencas, notificacoes,
+    versao: 1, workspace, turmas, alunos, chamadas, presencas, notificacoes,
     config: cfg?.value || null
   }
 }
@@ -102,40 +99,27 @@ export async function exportarBackup(workspaceId) {
 export async function importarBackup(pacote) {
   if (!pacote?.workspace) throw new Error('Pacote inválido')
   const novaId = await db.workspaces.add({
-    nome: pacote.workspace.nome,
-    codigo: pacote.workspace.codigo,
-    criadoEm: new Date().toISOString()
+    nome: pacote.workspace.nome, codigo: pacote.workspace.codigo, criadoEm: new Date().toISOString()
   })
   const mapaTurma = {}
   for (const t of pacote.turmas || []) {
-    const id = await db.turmas.add({ workspaceId: novaId, nome: t.nome })
-    mapaTurma[t.id] = id
+    mapaTurma[t.id] = await db.turmas.add({ workspaceId: novaId, nome: t.nome })
   }
   const mapaAluno = {}
   for (const a of pacote.alunos || []) {
-    const id = await db.alunos.add({ turmaId: mapaTurma[a.turmaId], nome: a.nome })
-    mapaAluno[a.id] = id
+    mapaAluno[a.id] = await db.alunos.add({ turmaId: mapaTurma[a.turmaId], nome: a.nome })
   }
   const mapaChamada = {}
   for (const c of pacote.chamadas || []) {
-    const id = await db.chamadas.add({ turmaId: mapaTurma[c.turmaId], data: c.data, criadaEm: c.criadaEm })
-    mapaChamada[c.id] = id
+    mapaChamada[c.id] = await db.chamadas.add({ turmaId: mapaTurma[c.turmaId], data: c.data, criadaEm: c.criadaEm })
   }
   for (const p of pacote.presencas || []) {
-    await db.presencas.add({
-      chamadaId: mapaChamada[p.chamadaId],
-      alunoId: mapaAluno[p.alunoId],
-      status: p.status
-    })
+    await db.presencas.add({ chamadaId: mapaChamada[p.chamadaId], alunoId: mapaAluno[p.alunoId], status: p.status })
   }
   for (const n of pacote.notificacoes || []) {
     await db.notificacoes.add({
-      alunoId: mapaAluno[n.alunoId],
-      turmaId: mapaTurma[n.turmaId],
-      data: n.data,
-      observacao: n.observacao,
-      gerouFalta: n.gerouFalta,
-      criadoEm: n.criadoEm
+      alunoId: mapaAluno[n.alunoId], turmaId: mapaTurma[n.turmaId], data: n.data,
+      observacao: n.observacao, gerouFalta: n.gerouFalta, criadoEm: n.criadoEm
     })
   }
   if (pacote.config) await db.config.put({ key: `config:${novaId}`, value: pacote.config })

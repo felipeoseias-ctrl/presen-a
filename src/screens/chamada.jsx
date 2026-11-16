@@ -42,7 +42,6 @@ export default function Chamada({ turmaId, turmaNome, workspaceId, onVoltar }) {
     setHistorico(h => [...h, { alunoId, anterior: status[alunoId] || 'pendente' }])
     const p = await db.presencas.where({ chamadaId, alunoId }).first()
     if (p) await db.presencas.update(p.id, { status: novoStatus })
-    // avança para o próximo pendente ou para o fim
     let i = indice + 1
     while (i < alunos.length && (status[alunos[i].id] && status[alunos[i].id] !== 'pendente')) i++
     setIndice(Math.min(i, alunos.length))
@@ -59,7 +58,6 @@ export default function Chamada({ turmaId, turmaNome, workspaceId, onVoltar }) {
     if (idx >= 0) setIndice(idx)
   }
 
-  // Suporte a mouse e toque
   function pos(e) { return e.touches ? e.touches[0].clientX : e.clientX }
   function onDown(e) {
     if (!alunoAtual) return

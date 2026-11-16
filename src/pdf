@@ -1,6 +1,5 @@
 import { jsPDF } from 'jspdf'
 
-// Parser: uma linha = um nome. Remove numeração, linhas vazias e cabeçalhos óbvios.
 export function parseNomes(texto) {
   const blacklist = /^(nome|aluno|alunos|lista|turma|chamada|presen[çc]a|data)\b/i
   return texto
@@ -9,7 +8,6 @@ export function parseNomes(texto) {
     .filter(l => l.length > 0 && !/^\d+$/.test(l) && !blacklist.test(l))
 }
 
-// Gráfico de presenças por dia no PDF
 function desenharGrafico(doc, dias, x, y, w, h) {
   const max = Math.max(1, ...dias.map(d => d.presentes))
   doc.setDrawColor(220); doc.setLineWidth(0.2)

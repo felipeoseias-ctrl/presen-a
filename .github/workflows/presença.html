@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0f766e" />
+<title>PresençaPro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --verde:#0f766e; --verde-claro:#d1fae5; --vermelho:#dc2626; --vermelho-claro:#fee2e2;
+    --cinza:#6b7280; --bg:#f3f4f6; --card:#fff; --texto:#111827; --borda:#e5e7eb;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--texto);padding-bottom:env(safe-area-inset-bottom)}
+  .app{display:flex;flex-direction:column;min-height:100vh;padding-bottom:70px}
+  .topbar{background:var(--verde);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center}
+  .topbar-sub{font-size:12px;opacity:.8}
+  .topbar-title{font-size:18px;font-weight:700}
+  .topbar-code{background:rgba(255,255,255,.2);padding:4px 8px;border-radius:6px;font-size:12px;letter-spacing:1px}
+  .conteudo{flex:1;padding:16px;max-width:640px;width:100%;margin:0 auto}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--borda);padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{flex:1;background:none;border:none;padding:8px 0;display:flex;flex-direction:column;align-items:center;font-size:18px;color:var(--cinza);cursor:pointer}
+  .tabbar button span{font-size:11px}
+  .tabbar button.ativo{color:var(--verde)}
+  h2{margin:8px 0 16px;font-size:20px}
+  h3{margin:0 0 8px;font-size:16px}
+  .card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .card-interno{background:var(--bg);border-radius:8px;padding:10px;margin-top:10px}
+  .btn{border:1px solid var(--borda);background:#fff;color:var(--texto);padding:10px 14px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:500}
+  .btn.primario{background:var(--verde);border-color:var(--verde);color:#fff}
+  .btn.perigo{background:var(--vermelho);border-color:var(--vermelho);color:#fff;width:100%;margin-top:8px}
+  .btn.link{background:none;border:none;color:var(--verde);padding:6px 0;text-align:left;cursor:pointer}
+  .btn-mini{background:none;border:none;color:var(--vermelho);font-size:12px;cursor:pointer}
+  .input{width:100%;padding:10px 12px;border:1px solid var(--borda);border-radius:8px;font-size:14px;background:#fff;margin-bottom:8px;font-family:inherit}
+  .linha{display:flex;gap:8px;align-items:center}
+  .linha .input{margin-bottom:0}
+  .dica{color:var(--cinza);font-size:13px}
+  .dica.centro{text-align:center;margin-top:12px}
+  .erro{color:var(--vermelho);font-size:13px;margin:6px 0}
+  .sucesso{color:var(--verde);font-size:13px;margin:8px 0;font-weight:500}
+  .lista{list-style:none;padding:0;margin:12px 0 0}
+  .lista li{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-bottom:1px solid var(--borda);cursor:pointer}
+  .lista li:last-child{border-bottom:none}
+  .seta{color:var(--cinza);font-size:20px}
+  .tag{background:var(--bg);color:var(--cinza);padding:2px 6px;border-radius:4px;font-size:11px;margin-left:6px}
+  .contador{background:var(--vermelho-claro);color:var(--vermelho);border-radius:999px;padding:2px 8px;font-size:12px;font-weight:600}
+  .home{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+  .home-logo{font-size:28px;font-weight:800;color:var(--verde)}
+  .home-sub{color:var(--cinza);margin:6px 0 32px;text-align:center}
+  .home-acoes{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px}
+  .home .card{width:100%;max-width:380px}
+  .chamada{padding:16px;max-width:480px;margin:0 auto}
+  .chamada-topo{display:flex;justify-content:space-between;align-items:center}
+  .chamada-progresso{font-size:13px;color:var(--cinza)}
+  .stack{position:relative;height:340px;margin:16px 0}
+  .card-aluno{position:absolute;inset:0;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;user-select:none;touch-action:pan-y;border:2px solid var(--borda)}
+  .avatar{width:90px;height:90px;border-radius:50%;background:var(--verde-claro);color:var(--verde);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;margin-bottom:16px}
+  .nome-aluno{font-size:22px;font-weight:700}
+  .status-atual{color:var(--cinza);font-size:13px;margin-top:6px}
+  .badge{position:absolute;top:20px;padding:6px 14px;border-radius:6px;font-weight:800;font-size:16px;border:2px solid}
+  .badge.presente{left:20px;color:var(--verde);border-color:var(--verde);transform:rotate(-12deg)}
+  .badge.falta{right:20px;color:var(--vermelho);border-color:var(--vermelho);transform:rotate(12deg)}
+  .acoes-chamada{display:flex;gap:10px;align-items:center}
+  .btn-falta,.btn-presente{flex:1;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer}
+  .btn-falta{background:var(--vermelho-claro);color:var(--vermelho)}
+  .btn-presente{background:var(--verde-claro);color:var(--verde)}
+  .btn-desfazer{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:14px;font-size:16px;cursor:pointer}
+  .btn-desfazer:disabled{opacity:.4}
+  .resumo{display:flex;gap:10px;margin:16px 0}
+  .resumo-item{flex:1;background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .resumo-item strong{display:block;font-size:26px}
+  .resumo-item span{font-size:12px;color:var(--cinza)}
+  .resumo-item.verde strong{color:var(--verde)}
+  .resumo-item.vermelho strong{color:var(--vermelho)}
+  .resumo-item.cinza strong{color:var(--cinza)}
+  .barra-linha{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .barra-nome{width:90px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra{flex:1;height:10px;background:var(--bg);border-radius:999px;overflow:hidden}
+  .barra>div{height:100%;background:var(--verde)}
+  .barra-valor{width:56px;text-align:right;font-size:12px;font-weight:600}
+  .qr{display:block;margin:0 auto 12px;width:180px;height:180px}
+  .campo{display:block;font-size:14px;margin-bottom:12px}
+  .campo .input{margin-top:6px}
+  .grafico{display:flex;align-items:flex-end;gap:4px;height:120px;padding:8px 0;border-bottom:1px solid var(--borda)}
+  .grafico-col{flex:1;display:flex;align-items:flex-end;height:100%}
+  .grafico-barra{width:100%;background:var(--verde);border-radius:4px 4px 0 0;min-height:2px}
+  .loading{display:flex;align-items:center;justify-content:center;min-height:100vh;color:var(--cinza)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ============ BANCO (IndexedDB) ============ */
+const DB_NAME = 'presencapro';
+const DB_VER = 1;
+let db;
+
+function abrirDB(){
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('workspaces')) d.createObjectStore('workspaces', { keyPath:'id', autoIncrement:true });
+      if (!d.objectStoreNames.contains('turmas')) { const s = d.createObjectStore('turmas', { keyPath:'id', autoIncrement:true }); s.createIndex('workspaceId','workspaceId'); }
+      if (!d.objectStoreNames.contains('alunos')) { const s = d.createObjectStore('alunos', { keyPath:'id', autoIncrement:true }); s.createIndex('turmaId','turmaId'); }
+      if (!d.objectStoreNames.contains('chamadas')) { const s = d.createObjectStore('chamadas', { keyPath:'id', autoIncrement:true }); s.createIndex('turmaId','turmaId'); s.createIndex('data','data'); }
+      if (!d.objectStoreNames.contains('presencas')) { const s = d.createObjectStore('presencas', { keyPath:'id', autoIncrement:true }); s.createIndex('chamadaId','chamadaId'); s.createIndex('alunoId','alunoId'); }
+      if (!d.objectStoreNames.contains('notificacoes')) { const s = d.createObjectStore('notificacoes', { keyPath:'id', autoIncrement:true }); s.createIndex('alunoId','alunoId'); s.createIndex('turmaId','turmaId'); s.createIndex('data','data'); }
+      if (!d.objectStoreNames.contains('config')) d.createObjectStore('config', { keyPath:'key' });
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+    req.onerror = e => rej(e.target.error);
+  });
+}
+
+function tx(store, mode='readonly'){ return db.transaction(store, mode).objectStore(store); }
+function req(r){ return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function getAll(store){ return req(tx(store).getAll()); }
+function getById(store, id){ return req(tx(store).get(id)); }
+function add(store, val){ return req(tx(store,'readwrite').add(val)); }
+function put(store, val){ return req(tx(store,'readwrite').put(val)); }
+function del(store, id){ return req(tx(store,'readwrite').delete(id)); }
+function countByIndex(store, index, key){
+  return new Promise((res, rej) => {
+    const r = tx(store).index(index).count(IDBKeyRange.only(key));
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+function getAllByIndex(store, index, key){
+  return new Promise((res, rej) => {
+    const r = tx(store).index(index).getAll(IDBKeyRange.only(key));
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+
+/* ============ REGRAS ============ */
+async function getConfig(workspaceId){
+  const key = `config:${workspaceId}`;
+  const c = await getById('config', key);
+  if (c) return c.value;
+  const padrao = { limiteNotificacoes:3, limiteFaltasAlerta:5 };
+  await put('config', { key, value: padrao });
+  return padrao;
+}
+async function setConfig(workspaceId, value){ await put('config', { key:`config:${workspaceId}`, value }); }
+
+function gerarCodigo(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+async function criarWorkspace(nome){
+  const codigo = gerarCodigo();
+  const id = await add('workspaces', { nome, codigo, criadoEm:new Date().toISOString() });
+  await getConfig(id);
+  return { id, codigo };
+}
+
+function hoje(){ return new Date().toISOString().slice(0,10); }
+function mesAtual(){ return new Date().toISOString().slice(0,7); }
+
+async function abrirChamada(turmaId, data){
+  const todas = await getAllByIndex('chamadas','turmaId',turmaId);
+  const existente = todas.find(c => c.data === data);
+  if (existente){
+    const alunos = await getAllByIndex('alunos','turmaId',turmaId);
+    const pres = await getAllByIndex('presencas','chamadaId',existente.id);
+    const set = new Set(pres.map(p => p.alunoId));
+    for (const a of alunos) if (!set.has(a.id)) await add('presencas', { chamadaId:existente.id, alunoId:a.id, status:'pendente' });
+    return existente;
+  }
+  const id = await add('chamadas', { turmaId, data, criadaEm:new Date().toISOString() });
+  const alunos = await getAllByIndex('alunos','turmaId',turmaId);
+  for (const a of alunos) await add('presencas', { chamadaId:id, alunoId:a.id, status:'pendente' });
+  return getById('chamadas', id);
+}
+
+async function registrarNotificacao({ alunoId, turmaId, observacao, workspaceId, data }){
+  const cfg = await getConfig(workspaceId);
+  const doDia = (await getAllByIndex('notificacoes','alunoId',alunoId)).filter(n => n.data === data);
+  const qtd = doDia.length + 1;
+  let gerouFalta = false;
+  if (qtd >= cfg.limiteNotificacoes){
+    const jaGerou = doDia.some(n => n.gerouFalta);
+    if (!jaGerou){
+      const chamada = await abrirChamada(turmaId, data);
+      const pres = await getAllByIndex('presencas','chamadaId',chamada.id);
+      const p = pres.find(x => x.alunoId === alunoId);
+      if (p) await put('presencas', { ...p, status:'falta' });
+      gerouFalta = true;
+    }
+  }
+  await add('notificacoes', { alunoId, turmaId, data, observacao, gerouFalta, criadoEm:new Date().toISOString() });
+  return { qtd, gerouFalta };
+}
+
+/* ============ BACKUP / SYNC ============ */
+async function exportarBackup(workspaceId){
+  const workspace = await getById('workspaces', workspaceId);
+  const turmas = await getAllByIndex('turmas','workspaceId',workspaceId);
+  const turmaIds = turmas.map(t => t.id);
+  const alunos = []; const chamadas = []; const notificacoes = [];
+  for (const tid of turmaIds){
+    alunos.push(...await getAllByIndex('alunos','turmaId',tid));
+    chamadas.push(...await getAllByIndex('chamadas','turmaId',tid));
+    notificacoes.push(...await getAllByIndex('notificacoes','turmaId',tid));
+  }
+  const presencas = [];
+  for (const c of chamadas) presencas.push(...await getAllByIndex('presencas','chamadaId',c.id));
+  const cfg = await getById('config', `config:${workspaceId}`);
+  return { versao:1, workspace, turmas, alunos, chamadas, presencas, notificacoes, config: cfg?.value || null };
+}
+
+async function importarBackup(pacote){
+  if (!pacote?.workspace) throw new Error('Pacote inválido');
+  const novaId = await add('workspaces', { nome:pacote.workspace.nome, codigo:pacote.workspace.codigo, criadoEm:new Date().toISOString() });
+  const mapaTurma = {};
+  for (const t of pacote.turmas || []){
+    mapaTurma[t.id] = await add('turmas', { workspaceId:novaId, nome:t.nome });
+  }
+  const mapaAluno = {};
+  for (const a of pacote.alunos || []){
+    mapaAluno[a.id] = await add('alunos', { turmaId:mapaTurma[a.turmaId], nome:a.nome });
+  }
+  const mapaChamada = {};
+  for (const c of pacote.chamadas || []){
+    mapaChamada[c.id] = await add('chamadas', { turmaId:mapaTurma[c.turmaId], data:c.data, criadaEm:c.criadaEm });
+  }
+  for (const p of pacote.presencas || []){
+    await add('presencas', { chamadaId:mapaChamada[p.chamadaId], alunoId:mapaAluno[p.alunoId], status:p.status });
+  }
+  for (const n of pacote.notificacoes || []){
+    await add('notificacoes', { alunoId:mapaAluno[n.alunoId], turmaId:mapaTurma[n.turmaId], data:n.data, observacao:n.observacao, gerouFalta:n.gerouFalta, criadoEm:n.criadoEm });
+  }
+  if (pacote.config) await put('config', { key:`config:${novaId}`, value:pacote.config });
+  return novaId;
+}
+
+function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64dec(b64){ return decodeURIComponent(escape(atob(b64))); }
+async function exportarWorkspace(workspaceId){ return b64enc(JSON.stringify(await exportarBackup(workspaceId))); }
+async function importarWorkspace(b64){ return importarBackup(JSON.parse(b64dec(b64))); }
+
+/* ============ PARSER NOMES ============ */
+function parseNomes(texto){
+  const blacklist = /^(nome|aluno|alunos|lista|turma|chamada|presen[çc]a|data)\b/i;
+  return texto.split(/\r?\n/)
+    .map(l => l.replace(/^\s*\d+[.)\-]\s*/,'').trim())
+    .filter(l => l.length > 0 && !/^\d+$/.test(l) && !blacklist.test(l));
+}
+
+/* ============ PDF RELATÓRIO ============ */
+function desenharGraficoPDF(doc, dias, x, y, w, h){
+  const max = Math.max(1, ...dias.map(d => d.presentes));
+  doc.setDrawColor(220); doc.setLineWidth(0.2);
+  doc.line(x, y+h, x+w, y+h);
+  const passo = dias.length > 1 ? w/(dias.length-1) : w;
+  doc.setDrawColor(15,118,110); doc.setLineWidth(0.8);
+  let prev = null;
+  dias.forEach((d,i) => {
+    const px = x + i*passo;
+    const py = y + h - (d.presentes/max)*h;
+    if (prev) doc.line(prev.x, prev.y, px, py);
+    doc.circle(px, py, 0.8, 'F');
+    prev = { x:px, y:py };
+  });
+}
+function exportarRelatorioPDF({ turma, periodo, resumo, dias, alunos }){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 15;
+  doc.setFontSize(16); doc.text('PresençaPro — Relatório', 14, y); y += 8;
+  doc.setFontSize(11);
+  doc.text(`Turma: ${turma}    Período: ${periodo}`, 14, y); y += 8;
+  doc.text(`Presenças: ${resumo.presencas}   Faltas: ${resumo.faltas}   Notificações: ${resumo.notificacoes}`, 14, y); y += 10;
+  if (dias.length){
+    doc.setFontSize(12); doc.text('Presenças ao longo do período', 14, y); y += 4;
+    desenharGraficoPDF(doc, dias, 24, y, 160, 40); y += 50;
+  }
+  doc.setFontSize(12); doc.text('Alunos críticos', 14, y); y += 7;
+  doc.setFontSize(10);
+  const criticos = [...alunos].sort((a,b) => (b.faltas+b.notificacoes)-(a.faltas+a.notificacoes));
+  for (const a of criticos){
+    if (y > 280){ doc.addPage(); y = 15; }
+    doc.text(`${a.nome}  —  Faltas: ${a.faltas}  |  Notificações: ${a.notificacoes}`, 14, y); y += 5;
+  }
+  doc.save(`relatorio-${turma}-${periodo}.pdf`);
+}
+
+/* ============ UI HELPERS ============ */
+const root = document.getElementById('root');
+const LS_KEY = 'pp_workspace_ativo';
+let state = { workspace:null, tab:'turmas', chamadaAtiva:null };
+
+function el(tag, attrs={}, ...children){
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)){
+    if (k === 'class') e.className = v;
+    else if (k === 'html') e.innerHTML = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else e.setAttribute(k, v);
+  }
+  for (const c of children.flat()){
+    if (c == null) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+function render(){
+  root.innerHTML = '';
+  if (!state.workspace){ renderHome(); return; }
+  if (state.chamadaAtiva){ renderChamada(); return; }
+  renderApp();
+}
+
+/* ---------- HOME ---------- */
+function renderHome(){
+  let modo = null;
+  const wrap = el('div', { class:'home' });
+  const logo = el('div', { class:'home-logo' }, 'PresençaPro');
+  const sub = el('p', { class:'home-sub' }, 'Chamada, monitor de pátio e relatórios');
+  wrap.append(logo, sub);
+  const area = el('div', { class:'home-acoes' });
+  wrap.appendChild(area);
+
+  function setModo(m){ modo = m; desenhar(); }
+  function desenhar(){
+    area.innerHTML = '';
+    if (!modo){
+      area.append(
+        el('button', { class:'btn primario', onclick:() => setModo('criar') }, '+ Criar novo espaço'),
+        el('button', { class:'btn', onclick:() => setModo('codigo') }, 'Entrar com código'),
+        el('button', { class:'btn', onclick:() => setModo('importar') }, 'Importar dados')
+      );
+      return;
+    }
+    const card = el('div', { class:'card' });
+    if (modo === 'criar'){
+      const nome = el('input', { class:'input', placeholder:'Ex: Noite' });
+      card.append(
+        el('h3', {}, 'Novo espaço'),
+        el('p', { class:'dica' }, 'Nome do turno que agrupa as turmas (ex: Noite)'),
+        nome,
+        el('button', { class:'btn primario', onclick: async () => {
+          if (!nome.value.trim()) return alert('Informe o nome do turno');
+          const { id } = await criarWorkspace(nome.value.trim());
+          state.workspace = await getById('workspaces', id);
+          localStorage.setItem(LS_KEY, String(id));
+          state.tab = 'turmas'; render();
+        }}, 'Criar'),
+        el('button', { class:'btn link', onclick:() => setModo(null) }, 'Voltar')
+      );
+    }
+    if (modo === 'codigo'){
+      const cod = el('input', { class:'input', placeholder:'Z7VDSV', maxlength:'6' });
+      card.append(
+        el('h3', {}, 'Entrar com código'),
+        el('p', { class:'dica' }, 'Use o mesmo código em outros dispositivos para compartilhar dados.'),
+        cod,
+        el('button', { class:'btn primario', onclick: async () => {
+          const code = cod.value.trim().toUpperCase();
+          const ws = (await getAll('workspaces')).find(w => w.codigo === code);
+          if (!ws) return alert('Código não encontrado neste dispositivo. Use "Importar dados".');
+          state.workspace = ws; localStorage.setItem(LS_KEY, String(ws.id)); state.tab = 'turmas'; render();
+        }}, 'Entrar'),
+        el('button', { class:'btn link', onclick:() => setModo(null) }, 'Voltar')
+      );
+    }
+    if (modo === 'importar'){
+      const txt = el('textarea', { class:'input', rows:'6', placeholder:'Cole aqui o código de sincronização' });
+      card.append(
+        el('h3', {}, 'Importar dados'),
+        el('p', { class:'dica' }, 'Cole o texto de sincronização gerado em Ajustes no outro dispositivo.'),
+        txt,
+        el('button', { class:'btn primario', onclick: async () => {
+          try {
+            const id = await importarWorkspace(txt.value.trim());
+            state.workspace = await getById('workspaces', id);
+            localStorage.setItem(LS_KEY, String(id)); state.tab = 'turmas'; render();
+          } catch { alert('Texto inválido.'); }
+        }}, 'Importar'),
+        el('button', { class:'btn link', onclick:() => setModo(null) }, 'Voltar')
+      );
+    }
+    area.appendChild(card);
+  }
+  desenhar();
+  root.appendChild(wrap);
+}
+/* ---------- APP (abas) ---------- */
+function renderApp(){
+  const ws = state.workspace;
+  const top = el('header', { class:'topbar' },
+    el('div', {}, el('div', { class:'topbar-sub' }, 'Turno'), el('div', { class:'topbar-title' }, ws.nome)),
+    el('div', { class:'topbar-code' }, ws.codigo)
+  );
+  const main = el('main', { class:'conteudo' });
+  const nav = el('nav', { class:'tabbar' });
+  const tabs = [
+    ['turmas','🏠','Turmas'],
+    ['monitor','⚠️','Monitor'],
+    ['relatorios','📊','Relatórios'],
+    ['ajustes','⚙️','Ajustes']
+  ];
+  tabs.forEach(([k,ic,lb]) => {
+    nav.appendChild(el('button', {
+      class: state.tab === k ? 'ativo' : '',
+      onclick: () => { state.tab = k; render(); }
+    }, ic, el('span', {}, lb)));
+  });
+  root.append(el('div', { class:'app' }, top, main, nav));
+  if (state.tab === 'turmas') renderTurmas(main);
+  if (state.tab === 'monitor') renderMonitor(main);
+  if (state.tab === 'relatorios') renderRelatorios(main);
+  if (state.tab === 'ajustes') renderAjustes(main);
+}
+
+/* ---------- TURMAS ---------- */
+async function renderTurmas(main){
+  const ws = state.workspace;
+  let turmas = await getAllByIndex('turmas','workspaceId',ws.id);
+  let turmaSel = null;
+  let alunos = [];
+
+  function desenhar(){
+    main.innerHTML = '';
+    if (!turmaSel){
+      const nomeInput = el('input', { class:'input', placeholder:'Nome da turma (ex: 3B)' });
+      const lista = el('ul', { class:'lista' });
+      turmas.forEach(t => {
+        lista.appendChild(el('li', { onclick: async () => { turmaSel = t; alunos = await getAllByIndex('alunos','turmaId',t.id); desenhar(); } },
+          el('span', {}, t.nome), el('span', { class:'seta' }, '›')));
+      });
+      main.append(
+        el('h2', {}, 'Turmas'),
+        el('div', { class:'linha' },
+          nomeInput,
+          el('button', { class:'btn', onclick: async () => {
+            if (!nomeInput.value.trim()) return;
+            await add('turmas', { workspaceId: ws.id, nome: nomeInput.value.trim() });
+            turmas = await getAllByIndex('turmas','workspaceId',ws.id);
+            desenhar();
+          }}, 'Criar')
+        ),
+        lista
+      );
+      if (!turmas.length) main.appendChild(el('p', { class:'dica' }, 'Nenhuma turma ainda. Crie a primeira acima.'));
+      return;
+    }
+
+    const back = el('button', { class:'btn link', onclick: () => { turmaSel = null; desenhar(); } }, '← Turmas');
+    const iniciar = el('button', { class:'btn primario', onclick: () => {
+      state.chamadaAtiva = { turmaId: turmaSel.id, turmaNome: turmaSel.nome };
+      render();
+    }}, 'Iniciar chamada');
+    const novo = el('input', { class:'input', placeholder:'Nome do aluno' });
+    const addBtn = el('button', { class:'btn', onclick: async () => {
+      if (!novo.value.trim()) return;
+      await add('alunos', { turmaId: turmaSel.id, nome: novo.value.trim() });
+      alunos = await getAllByIndex('alunos','turmaId',turmaSel.id);
+      desenhar();
+    }}, 'Adicionar');
+    const card = el('div', { class:'card' }, el('h3', {}, `Alunos (${alunos.length})`), el('div', { class:'linha' }, novo, addBtn));
+
+    const importTxt = el('textarea', { class:'input', rows:'5', placeholder:'Agata\nAlef\nAlisson' });
+    const importBox = el('div', { class:'card-interno', style:{display:'none'} });
+    const fileInput = el('input', { type:'file', accept:'.txt,.csv,.pdf,text/plain,text/csv,application/pdf' });
+    fileInput.addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return;
+      if (f.name.toLowerCase().endsWith('.pdf')){
+        const buf = await f.arrayBuffer();
+        const raw = new TextDecoder('latin1').decode(new Uint8Array(buf));
+        const matches = raw.match(/\((?:[^()\\]|\\.)*\)/g) || [];
+        const texto = matches.map(m => m.slice(1,-1).replace(/\\(.)/g,'$1')).join('\n');
+        if (!texto.trim()) return alert('PDF parece escaneado. Use colar texto ou CSV.');
+        importTxt.value += (importTxt.value ? '\n' : '') + texto;
+      } else {
+        importTxt.value += (importTxt.value ? '\n' : '') + await f.text();
+      }
+    });
+    importBox.append(
+      el('p', { class:'dica' }, 'Uma linha = um nome. Cole abaixo ou selecione .txt/.csv/.pdf.'),
+      importTxt, fileInput,
+      el('button', { class:'btn primario', onclick: async () => {
+        const nomes = parseNomes(importTxt.value);
+        for (const n of nomes) await add('alunos', { turmaId: turmaSel.id, nome:n });
+        alunos = await getAllByIndex('alunos','turmaId',turmaSel.id);
+        importTxt.value = ''; importBox.style.display = 'none'; desenhar();
+      }}, 'Importar nomes')
+    );
+    const toggleImport = el('button', { class:'btn link', onclick: () => {
+      importBox.style.display = importBox.style.display === 'none' ? 'block' : 'none';
+    }}, 'Importar PDF / texto / CSV');
+    card.append(toggleImport, importBox);
+
+    const lista = el('ul', { class:'lista' });
+    alunos.forEach(a => {
+      lista.appendChild(el('li', {},
+        el('span', {}, a.nome),
+        el('button', { class:'btn-mini', onclick: async () => {
+          const tem = await countByIndex('presencas','alunoId',a.id);
+          const aviso = tem > 0 ? `Remover ${a.nome}? Já tem registros de chamada/notificação.` : `Remover ${a.nome}?`;
+          if (!confirm(aviso)) return;
+          const pres = await getAllByIndex('presencas','alunoId',a.id);
+          for (const p of pres) await del('presencas', p.id);
+          const nots = await getAllByIndex('notificacoes','alunoId',a.id);
+          for (const n of nots) await del('notificacoes', n.id);
+          await del('alunos', a.id);
+          alunos = await getAllByIndex('alunos','turmaId',turmaSel.id);
+          desenhar();
+        }}, 'Remover')
+      ));
+    });
+    card.appendChild(lista);
+
+    main.append(back, el('h2', {}, turmaSel.nome), iniciar, card);
+  }
+  desenhar();
+}
+
+/* ---------- CHAMADA ---------- */
+async function renderChamada(){
+  const { turmaId, turmaNome } = state.chamadaAtiva;
+  const ws = state.workspace;
+  const data = hoje();
+  let alunos = await getAllByIndex('alunos','turmaId',turmaId);
+  const chamada = await abrirChamada(turmaId, data);
+  let pres = await getAllByIndex('presencas','chamadaId',chamada.id);
+  let status = {};
+  pres.forEach(p => { status[p.alunoId] = p.status; });
+  let indice = alunos.findIndex(a => (status[a.id] || 'pendente') === 'pendente');
+  if (indice === -1) indice = alunos.length;
+  let historico = [];
+  let drag = { x:0, ativo:false };
+  let startX = 0;
+
+  const wrap = el('div', { class:'chamada' });
+  root.innerHTML = '';
+  root.appendChild(wrap);
+
+  function desenhar(){
+    wrap.innerHTML = '';
+    if (!alunos.length){
+      wrap.append(el('button', { class:'btn link', onclick:() => { state.chamadaAtiva = null; render(); } }, '← Voltar'),
+        el('p', { class:'dica' }, 'Nenhum aluno nesta turma.'));
+      return;
+    }
+    if (indice >= alunos.length){
+      const presentes = alunos.filter(a => status[a.id] === 'presente').length;
+      const faltas = alunos.filter(a => status[a.id] === 'falta').length;
+      const pend = alunos.filter(a => (status[a.id] || 'pendente') === 'pendente').length;
+      wrap.append(
+        el('button', { class:'btn link', onclick:() => { state.chamadaAtiva = null; render(); } }, '← Voltar'),
+        el('h2', {}, `${turmaNome} — ${data}`),
+        el('div', { class:'resumo' },
+          el('div', { class:'resumo-item verde' }, el('strong', {}, String(presentes)), el('span', {}, 'Presentes')),
+          el('div', { class:'resumo-item vermelho' }, el('strong', {}, String(faltas)), el('span', {}, 'Faltas')),
+          el('div', { class:'resumo-item cinza' }, el('strong', {}, String(pend)), el('span', {}, 'Pendentes'))
+        ),
+        el('div', { class:'linha' },
+          el('button', { class:'btn', onclick:() => { indice = 0; desenhar(); } }, 'Revisar'),
+          el('button', { class:'btn primario', onclick:() => { state.chamadaAtiva = null; render(); } }, 'Concluir')
+        )
+      );
+      return;
+    }
+    const alunoAtual = alunos[indice];
+    const st = status[alunoAtual.id] || 'pendente';
+    const pendentes = alunos.filter(a => (status[a.id] || 'pendente') === 'pendente').length;
+    const rotacao = drag.x / 20;
+    const opP = Math.min(Math.max(drag.x/120,0),1);
+    const opF = Math.min(Math.max(-drag.x/120,0),1);
+
+    const cardAluno = el('div', { class:'card-aluno', style:{
+      transform:`translateX(${drag.x}px) rotate(${rotacao}deg)`,
+      transition: drag.ativo ? 'none' : 'transform .2s'
+    }},
+      el('div', { class:'badge presente', style:{opacity:opP} }, 'PRESENTE'),
+      el('div', { class:'badge falta', style:{opacity:opF} }, 'FALTA'),
+      el('div', { class:'avatar' }, alunoAtual.nome.charAt(0).toUpperCase()),
+      el('div', { class:'nome-aluno' }, alunoAtual.nome),
+      el('div', { class:'status-atual' }, `Status: ${st}`)
+    );
+
+    function pos(e){ return e.touches ? e.touches[0].clientX : e.clientX; }
+    function down(e){ startX = pos(e); drag = { x:0, ativo:true }; }
+    function move(e){ if (!drag.ativo) return; drag = { x: pos(e)-startX, ativo:true }; desenhar(); }
+    function up(){
+      if (!drag.ativo) return;
+      const dx = drag.x; drag = { x:0, ativo:false };
+      if (dx > 80) definir(alunoAtual.id, 'presente');
+      else if (dx < -80) definir(alunoAtual.id, 'falta');
+      else desenhar();
+    }
+    cardAluno.addEventListener('touchstart', down);
+    cardAluno.addEventListener('touchmove', e => { e.preventDefault(); move(e); }, { passive:false });
+    cardAluno.addEventListener('touchend', up);
+    cardAluno.addEventListener('mousedown', down);
+    cardAluno.addEventListener('mousemove', move);
+    cardAluno.addEventListener('mouseup', up);
+    cardAluno.addEventListener('mouseleave', () => { if (drag.ativo) up(); });
+
+    wrap.append(
+      el('div', { class:'chamada-topo' },
+        el('button', { class:'btn link', onclick:() => { state.chamadaAtiva = null; render(); } }, '← Sair'),
+        el('span', { class:'chamada-progresso' }, `${indice+1} / ${alunos.length} · ${pendentes} pendente(s)`)
+      ),
+      el('h2', {}, `${turmaNome} — ${data}`),
+      el('div', { class:'stack' }, cardAluno),
+      el('div', { class:'acoes-chamada' },
+        el('button', { class:'btn-falta', onclick:() => definir(alunoAtual.id, 'falta') }, '✕ Falta'),
+        el('button', { class:'btn-desfazer', disabled: !historico.length, onclick: desfazer }, '↺'),
+        el('button', { class:'btn-presente', onclick:() => definir(alunoAtual.id, 'presente') }, '✓ Presente')
+      ),
+      el('p', { class:'dica centro' }, 'Arraste o card ou use os botões.')
+    );
+  }
+
+  async function definir(alunoId, novoStatus){
+    status[alunoId] = novoStatus;
+    historico.push({ alunoId, anterior: status[alunoId] || 'pendente' });
+    const p = (await getAllByIndex('presencas','chamadaId',chamada.id)).find(x => x.alunoId === alunoId);
+    if (p) await put('presencas', { ...p, status:novoStatus });
+    let i = indice + 1;
+    while (i < alunos.length && status[alunos[i].id] && status[alunos[i].id] !== 'pendente') i++;
+    indice = Math.min(i, alunos.length);
+    desenhar();
+  }
+  async function desfazer(){
+    const ult = historico.pop();
+    if (!ult) return;
+    status[ult.alunoId] = ult.anterior;
+    const p = (await getAllByIndex('presencas','chamadaId',chamada.id)).find(x => x.alunoId === ult.alunoId);
+    if (p) await put('presencas', { ...p, status: ult.anterior });
+    const idx = alunos.findIndex(a => a.id === ult.alunoId);
+    if (idx >= 0) indice = idx;
+    desenhar();
+  }
+  desenhar();
+}
+
+/* ---------- MONITOR ---------- */
+async function renderMonitor(main){
+  const ws = state.workspace;
+  const turmas = await getAllByIndex('turmas','workspaceId',ws.id);
+  const turmaIds = turmas.map(t => t.id);
+  const alunos = [];
+  for (const tid of turmaIds) alunos.push(...await getAllByIndex('alunos','turmaId',tid));
+  const data = hoje();
+  const nots = (await getAll('notificacoes')).filter(n => n.data === data);
+  const contagem = {};
+  nots.forEach(n => { contagem[n.alunoId] = (contagem[n.alunoId] || 0) + 1; });
+
+  let sel = null; let obs = ''; let busca = '';
+
+  function desenhar(){
+    main.innerHTML = '';
+    main.append(
+      el('h2', {}, 'Monitor de Pátio'),
+      el('p', { class:'dica' }, 'Registre alunos fora de sala sem autorização.')
+    );
+    const buscaInput = el('input', { class:'input', placeholder:'Buscar aluno ou turma…', value:busca });
+    buscaInput.addEventListener('input', e => { busca = e.target.value; desenhar(); });
+    main.appendChild(buscaInput);
+
+    if (!sel){
+      const lista = el('ul', { class:'lista' });
+      const filtrados = alunos.filter(a => {
+        const t = turmas.find(x => x.id === a.turmaId);
+        return `${a.nome} ${t?.nome || ''}`.toLowerCase().includes(busca.toLowerCase());
+      });
+      filtrados.forEach(a => {
+        const t = turmas.find(x => x.id === a.turmaId);
+        lista.appendChild(el('li', { onclick:() => { sel = a; desenhar(); } },
+          el('span', {}, a.nome, el('small', { class:'tag' }, t?.nome || '')),
+          el('span', { class:'contador' }, String(contagem[a.id] || 0))
+        ));
+      });
+      if (!filtrados.length) lista.appendChild(el('li', {}, el('span', { class:'dica' }, 'Nenhum aluno encontrado.')));
+      main.appendChild(lista);
+      return;
+    }
+
+    const obsTa = el('textarea', { class:'input', rows:'3', placeholder:'Observação (opcional): local, motivo…' });
+    obsTa.value = obs;
+    obsTa.addEventListener('input', e => obs = e.target.value);
+    main.appendChild(el('div', { class:'card' },
+      el('h3', {}, `Notificar ${sel.nome}`),
+      el('p', { class:'dica' }, 'Ao atingir o limite no mesmo dia, o aluno recebe falta automaticamente.'),
+      obsTa,
+      el('div', { class:'linha' },
+        el('button', { class:'btn', onclick:() => { sel = null; obs = ''; desenhar(); } }, 'Cancelar'),
+        el('button', { class:'btn primario', onclick: async () => {
+          const r = await registrarNotificacao({ alunoId:sel.id, turmaId:sel.turmaId, observacao:obs, workspaceId:ws.id, data });
+          alert(r.gerouFalta ? `Notificação ${r.qtd} registrada. Falta automática gerada!` : `Notificação ${r.qtd} registrada.`);
+          sel = null; obs = ''; render();
+        }}, 'Registrar notificação')
+      )
+    ));
+  }
+  desenhar();
+}
+/* ---------- RELATÓRIOS ---------- */
+async function renderRelatorios(main){
+  const ws = state.workspace;
+  const turmas = await getAllByIndex('turmas','workspaceId',ws.id);
+  let turmaId = turmas[0]?.id || '';
+  let mes = mesAtual();
+
+  async function desenhar(){
+    main.innerHTML = '';
+    const sel = el('select', { class:'input' });
+    turmas.forEach(t => {
+      const o = el('option', { value:String(t.id) }, t.nome);
+      if (String(t.id) === String(turmaId)) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', e => { turmaId = e.target.value; desenhar(); });
+    const mesInput = el('input', { class:'input', type:'month', value:mes });
+    mesInput.addEventListener('change', e => { mes = e.target.value; desenhar(); });
+
+    main.append(el('h2', {}, 'Relatórios'), el('div', { class:'linha' }, sel, mesInput));
+
+    if (!turmaId){ main.appendChild(el('p', { class:'dica' }, 'Crie uma turma primeiro.')); return; }
+
+    const alunos = await getAllByIndex('alunos','turmaId', Number(turmaId));
+    const chamadas = (await getAllByIndex('chamadas','turmaId', Number(turmaId))).filter(c => c.data.startsWith(mes)).sort((a,b)=>a.data.localeCompare(b.data));
+    const pres = [];
+    for (const c of chamadas) pres.push(...await getAllByIndex('presencas','chamadaId',c.id));
+    const nots = (await getAllByIndex('notificacoes','turmaId', Number(turmaId))).filter(n => n.data.startsWith(mes));
+
+    const resumo = {
+      presencas: pres.filter(p => p.status === 'presente').length,
+      faltas: pres.filter(p => p.status === 'falta').length,
+      notificacoes: nots.length
+    };
+    const criticos = alunos.map(a => ({
+      ...a,
+      faltas: pres.filter(p => p.alunoId === a.id && p.status === 'falta').length,
+      notificacoes: nots.filter(n => n.alunoId === a.id).length
+    })).sort((a,b) => (b.faltas+b.notificacoes)-(a.faltas+a.notificacoes));
+    const dias = chamadas.map(c => ({ data:c.data, presentes: pres.filter(p => p.chamadaId === c.id && p.status === 'presente').length }));
+    const maxFaltas = Math.max(1, ...criticos.map(c => c.faltas));
+    const maxPres = Math.max(1, ...dias.map(d => d.presentes));
+    const turmaNome = turmas.find(t => String(t.id) === String(turmaId))?.nome || '';
+
+    main.append(el('div', { class:'resumo' },
+      el('div', { class:'resumo-item verde' }, el('strong', {}, String(resumo.presencas)), el('span', {}, 'Presenças')),
+      el('div', { class:'resumo-item vermelho' }, el('strong', {}, String(resumo.faltas)), el('span', {}, 'Faltas')),
+      el('div', { class:'resumo-item cinza' }, el('strong', {}, String(resumo.notificacoes)), el('span', {}, 'Notificações'))
+    ));
+
+    const graf = el('div', { class:'grafico' });
+    dias.forEach(d => graf.appendChild(el('div', { class:'grafico-col', title:`${d.data}: ${d.presentes}` },
+      el('div', { class:'grafico-barra', style:{ height:`${(d.presentes/maxPres)*100}%` } })
+    )));
+    main.appendChild(el('div', { class:'card' },
+      el('h3', {}, 'Presenças ao longo do período'),
+      dias.length ? graf : el('p', { class:'dica' }, 'Sem chamadas neste mês.')
+    ));
+
+    const cardCrit = el('div', { class:'card' }, el('h3', {}, 'Alunos críticos'));
+    criticos.forEach(c => {
+      cardCrit.appendChild(el('div', { class:'barra-linha' },
+        el('span', { class:'barra-nome' }, c.nome),
+        el('div', { class:'barra' }, el('div', { style:{ width:`${(c.faltas/maxFaltas)*100}%` } })),
+        el('span', { class:'barra-valor' }, `${c.faltas}F · ${c.notificacoes}N`)
+      ));
+    });
+    main.appendChild(cardCrit);
+
+    main.appendChild(el('button', { class:'btn primario', onclick: () => {
+      exportarRelatorioPDF({ turma:turmaNome, periodo:mes, resumo, dias, alunos:criticos });
+    }}, 'Exportar PDF'));
+  }
+  desenhar();
+}
+
+/* ---------- AJUSTES ---------- */
+async function renderAjustes(main){
+  const ws = state.workspace;
+  const cfg = await getConfig(ws.id);
+  const b64 = await exportarWorkspace(ws.id);
+  main.innerHTML = '';
+
+  main.append(
+    el('h2', {}, 'Ajustes'),
+    el('div', { class:'card' },
+      el('h3', {}, 'Workspace'),
+      el('p', {}, 'Nome: ', el('strong', {}, ws.nome)),
+      el('p', {}, 'Código: ', el('strong', {}, ws.codigo))
+    )
+  );
+
+  const qrBox = el('div', { class:'qr' });
+  main.appendChild(el('div', { class:'card' },
+    el('h3', {}, 'Sincronização'),
+    el('p', { class:'dica' }, 'Compartilhe o QR ou o texto com outro dispositivo.'),
+    qrBox
+  ));
+  try {
+    new QRCode(qrBox, { text:b64, width:180, height:180 });
+  } catch { qrBox.textContent = 'QR indisponível offline.'; }
+
+  const ta = el('textarea', { class:'input', rows:'3', readonly:'readonly' });
+  ta.value = b64;
+  const copiarBtn = el('button', { class:'btn', onclick: async () => {
+    try { await navigator.clipboard.writeText(b64); copiarBtn.textContent = 'Copiado!'; setTimeout(() => copiarBtn.textContent = 'Copiar texto', 2000); }
+    catch { alert('Copie manualmente o texto exibido.'); }
+  }}, 'Copiar texto');
+  main.children[2].append(ta, copiarBtn);
+
+  main.appendChild(el('div', { class:'card' },
+    el('h3', {}, 'Backup'),
+    el('button', { class:'btn', onclick: async () => {
+      const pacote = await exportarBackup(ws.id);
+      const blob = new Blob([JSON.stringify(pacote, null, 2)], { type:'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = el('a', { href:url, download:'presencapro-backup.json' });
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }}, 'Baixar backup (.json)'),
+    (() => {
+      const label = el('label', { class:'btn', style:{ display:'block', marginTop:'8px', textAlign:'center' } }, 'Importar backup');
+      const input = el('input', { type:'file', accept:'application/json', style:{ display:'none' } });
+      input.addEventListener('change', async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try { await importarBackup(JSON.parse(await f.text())); alert('Backup importado! Abra-o na tela inicial.'); }
+        catch { alert('Arquivo inválido.'); }
+      });
+      label.appendChild(input);
+      return label;
+    })()
+  ));
+
+  const limN = el('input', { class:'input', type:'number', min:'1', max:'10', inputmode:'numeric', value:String(cfg.limiteNotificacoes) });
+  const limF = el('input', { class:'input', type:'number', min:'1', max:'20', inputmode:'numeric', value:String(cfg.limiteFaltasAlerta) });
+  main.appendChild(el('div', { class:'card' },
+    el('h3', {}, 'Preferências'),
+    el('label', { class:'campo' }, 'Notificações para falta automática (mesmo dia)', limN),
+    el('label', { class:'campo' }, 'Alerta de muitas faltas (destacar alunos com X+ faltas)', limF),
+    el('button', { class:'btn primario', onclick: async () => {
+      await setConfig(ws.id, {
+        limiteNotificacoes: Math.max(1, Number(limN.value) || 3),
+        limiteFaltasAlerta: Math.max(1, Number(limF.value) || 5)
+      });
+      alert('Preferências salvas!');
+    }}, 'Salvar preferências')
+  ));
+
+  main.appendChild(el('button', { class:'btn perigo', onclick: () => {
+    if (!confirm('Sair deste espaço? Os dados continuam salvos neste dispositivo.')) return;
+    localStorage.removeItem(LS_KEY); state.workspace = null; render();
+  }}, 'Sair deste espaço'));
+}
+
+/* ============ INIT ============ */
+(async () => {
+  root.innerHTML = '<div class="loading">Carregando…</div>';
+  await abrirDB();
+  const id = localStorage.getItem(LS_KEY);
+  if (id){
+    const ws = await getById('workspaces', Number(id));
+    if (ws) state.workspace = ws;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

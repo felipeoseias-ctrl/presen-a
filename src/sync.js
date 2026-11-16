@@ -10,7 +10,6 @@ export async function importarWorkspace(base64) {
   return importarBackup(pacote)
 }
 
-// Backup em arquivo
 export async function baixarBackupJSON(workspaceId, nomeArquivo = 'presencapro-backup.json') {
   const pacote = await exportarBackup(workspaceId)
   const blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' })
